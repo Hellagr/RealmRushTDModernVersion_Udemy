@@ -43,15 +43,13 @@ public class TargerLocator : MonoBehaviour
     {
         float targetDistance = Mathf.Sqrt(Mathf.Pow(target.position.x - transform.position.x, 2) + Mathf.Pow(target.position.y - transform.position.y, 2) + Mathf.Pow(target.position.z - transform.position.z, 2));
 
-        weapon.LookAt(target);
-
         if (targetDistance > towersRange)
         {
             Attack(false);
         }
         else
         {
-
+            weapon.LookAt(target);
             Attack(true);
         }
     }

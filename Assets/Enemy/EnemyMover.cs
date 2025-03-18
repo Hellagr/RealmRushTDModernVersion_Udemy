@@ -22,12 +22,19 @@ public class EnemyMover : MonoBehaviour
         }
     }
 
+    Enemy enemy;
+
     void OnEnable()
     {
         pathObject = GameObject.FindGameObjectWithTag("PathMain").gameObject;
         FindPath();
         ReturnToStart();
         StartCoroutine(FollowPath());
+    }
+
+    void Start()
+    {
+        enemy = GetComponent<Enemy>();
     }
 
     void FindPath()
@@ -98,6 +105,7 @@ public class EnemyMover : MonoBehaviour
                 }
             }
         }
+        enemy.SteelGold();
         gameObject.SetActive(false);
     }
 }
