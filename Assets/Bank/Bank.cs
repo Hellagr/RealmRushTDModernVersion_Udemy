@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class Bank : MonoBehaviour
 {
@@ -13,19 +14,24 @@ public class Bank : MonoBehaviour
         }
     }
 
+    [SerializeField] TextMeshProUGUI displayBalance;
+
     void Awake()
     {
         currentBalance = startingBalance;
+        UpdateDisplay();
     }
 
     public void Deposit(int amout)
     {
         currentBalance += Mathf.Abs(amout);
+        UpdateDisplay();
     }
 
     public void Withdraw(int amout)
     {
         currentBalance -= Mathf.Abs(amout);
+        UpdateDisplay();
 
         if (currentBalance < 0)
         {
@@ -38,5 +44,10 @@ public class Bank : MonoBehaviour
     {
         Scene currentScene = SceneManager.GetActiveScene();
         SceneManager.LoadScene(currentScene.buildIndex);
+    }
+
+    void UpdateDisplay()
+    {
+        displayBalance.text = "Gold: " + currentBalance;
     }
 }

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
+[RequireComponent(typeof(Enemy))]
 public class EnemyMover : MonoBehaviour
 {
     [SerializeField] List<Waypoint> path = new List<Waypoint>();
@@ -100,11 +100,15 @@ public class EnemyMover : MonoBehaviour
                         transform.rotation = Quaternion.Lerp(startRotation, targetRotation, travelPercent * 5f);
                     }
 
-
                     yield return new WaitForEndOfFrame();
                 }
             }
         }
+        FinishPath();
+    }
+
+    void FinishPath()
+    {
         enemy.SteelGold();
         gameObject.SetActive(false);
     }
