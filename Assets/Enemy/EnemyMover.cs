@@ -5,9 +5,12 @@ using UnityEngine;
 [RequireComponent(typeof(Enemy))]
 public class EnemyMover : MonoBehaviour
 {
-    [SerializeField] List<Waypoint> path = new List<Waypoint>();
     [SerializeField][Range(0f, 5f)] float speed = 1f;
-    [SerializeField] GameObject pathObject;
+
+    List<Node> path = new List<Node>();
+    Enemy enemy;
+    GridManager gridManager;
+    PathFinder pathFinder;
 
     Transform startRotation;
     public Transform StartRotation
@@ -22,86 +25,85 @@ public class EnemyMover : MonoBehaviour
         }
     }
 
-    Enemy enemy;
 
     void OnEnable()
     {
-        pathObject = GameObject.FindGameObjectWithTag("PathMain").gameObject;
-        FindPath();
         ReturnToStart();
-        StartCoroutine(FollowPath());
+        RecalculatePath(true);
     }
 
-    void Start()
+    void Awake()
     {
         enemy = GetComponent<Enemy>();
+        gridManager = FindAnyObjectByType<GridManager>();
+        pathFinder = FindAnyObjectByType<PathFinder>();
     }
 
-    void FindPath()
+    void RecalculatePath(bool resetPath)
     {
-        path.Clear();
+        Vector2Int coordinates = new Vector2Int();
 
-        Waypoint[] waypoints = pathObject.GetComponentsInChildren<Waypoint>();
-
-        foreach (var waypoint in waypoints)
+        if (resetPath)
         {
-            path.Add(waypoint);
+            coordinates = pathFinder.StartCoordinates;
         }
+        else
+        {
+            coordinates = gridManager.GetCoordinatesFromPosition(transform.position);
+        }
+
+        StopAllCoroutines();
+        path.Clear();
+        path = pathFinder.GetNewPath(coordinates);
+        StartCoroutine(FollowPath());
     }
 
     void ReturnToStart()
     {
-        transform.position = path[0].transform.position;
+        transform.position = gridManager.GetPositionFromCoordinates(pathFinder.StartCoordinates);
     }
 
     IEnumerator FollowPath()
     {
-        foreach (var waypoint in path)
+        for (int i = 1; i < path.Count; i++)
         {
-            if (waypoint != path[0])
+            Vector3 startPos = transform.position;
+            Vector3 endPost = gridManager.GetPositionFromCoordinates(path[i].coordinates);
+            float travelPercent = 0;
+
+            Vector3 topPointVector1 = transform.forward;
+            Vector3 topPointVector2 = (endPost - startPos).normalized;
+
+            var lengthOfTheFirstVector = Mathf.Sqrt(Mathf.Pow(topPointVector1.x, 2) + Mathf.Pow(topPointVector1.y, 2) + Mathf.Pow(topPointVector1.z, 2));
+            var lengthOfTheSecondVector = Mathf.Sqrt(Mathf.Pow(topPointVector2.x, 2) + Mathf.Pow(topPointVector2.y, 2) + Mathf.Pow(topPointVector2.z, 2));
+
+            float scalarProduct = (topPointVector1.x * topPointVector2.x + topPointVector1.y * topPointVector2.y + topPointVector1.z * topPointVector2.z);
+
+            float cosAlpha = scalarProduct / (lengthOfTheFirstVector * lengthOfTheSecondVector);
+
+            float angleCosInRadians = Mathf.Acos(cosAlpha);
+            float angleInDegrees = angleCosInRadians * (180f / Mathf.PI);
+
+            Vector3 crossProduct = Vector3.Cross(topPointVector1, topPointVector2);
+            if (crossProduct.y < 0)
             {
-                Vector3 startPos = transform.position;
-                Vector3 endPost = waypoint.transform.position;
-                float travelPercent = 0;
+                angleInDegrees *= -1f;
+            }
 
-                Vector3 topPointVector1 = transform.forward;
-                Vector3 topPointVector2 = (endPost - startPos).normalized;
-                //if (StartRotation == null)
-                //{
-                //    StartRotation.position = topPointVector2;
-                //}
+            Quaternion startRotation = transform.rotation;
+            Quaternion targetRotation = transform.rotation * Quaternion.Euler(0, angleInDegrees, 0);
 
-                var lengthOfTheFirstVector = Mathf.Sqrt(Mathf.Pow(topPointVector1.x, 2) + Mathf.Pow(topPointVector1.y, 2) + Mathf.Pow(topPointVector1.z, 2));
-                var lengthOfTheSecondVector = Mathf.Sqrt(Mathf.Pow(topPointVector2.x, 2) + Mathf.Pow(topPointVector2.y, 2) + Mathf.Pow(topPointVector2.z, 2));
+            while (travelPercent < 1)
+            {
+                travelPercent += Time.deltaTime * speed;
+                transform.position = Vector3.Lerp(startPos, endPost, travelPercent);
 
-                float scalarProduct = (topPointVector1.x * topPointVector2.x + topPointVector1.y * topPointVector2.y + topPointVector1.z * topPointVector2.z);
-
-                float cosAlpha = scalarProduct / (lengthOfTheFirstVector * lengthOfTheSecondVector);
-
-                float angleCosInRadians = Mathf.Acos(cosAlpha);
-                float angleInDegrees = angleCosInRadians * (180f / Mathf.PI);
-
-                Vector3 crossProduct = Vector3.Cross(topPointVector1, topPointVector2);
-                if (crossProduct.y < 0)
+                if (angleInDegrees != 0)
                 {
-                    angleInDegrees *= -1f;
+                    transform.rotation = Quaternion.Lerp(startRotation, targetRotation, travelPercent * 5f);
                 }
 
-                Quaternion startRotation = transform.rotation;
-                Quaternion targetRotation = transform.rotation * Quaternion.Euler(0, angleInDegrees, 0);
-
-                while (travelPercent < 1)
-                {
-                    travelPercent += Time.deltaTime * speed;
-                    transform.position = Vector3.Lerp(startPos, endPost, travelPercent);
-
-                    if (angleInDegrees != 0)
-                    {
-                        transform.rotation = Quaternion.Lerp(startRotation, targetRotation, travelPercent * 5f);
-                    }
-
-                    yield return new WaitForEndOfFrame();
-                }
+                yield return new WaitForEndOfFrame();
             }
         }
         FinishPath();

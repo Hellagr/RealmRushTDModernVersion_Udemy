@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class TargerLocator : MonoBehaviour
+public class TargetLocator : MonoBehaviour
 {
     [SerializeField] Transform weapon;
     [SerializeField] ParticleSystem projectileParticles;

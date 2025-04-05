@@ -6,7 +6,7 @@ public class Bank : MonoBehaviour
 {
     [SerializeField] int startingBalance = 150;
     [SerializeField] int currentBalance;
-    public int CurrentBallance
+    public int CurrentBalance
     {
         get
         {
@@ -22,15 +22,15 @@ public class Bank : MonoBehaviour
         UpdateDisplay();
     }
 
-    public void Deposit(int amout)
+    public void Deposit(int amount)
     {
-        currentBalance += Mathf.Abs(amout);
+        currentBalance += Mathf.Abs(amount);
         UpdateDisplay();
     }
 
-    public void Withdraw(int amout)
+    public void Withdraw(int amount)
     {
-        currentBalance -= Mathf.Abs(amout);
+        currentBalance -= Mathf.Abs(amount);
         UpdateDisplay();
 
         if (currentBalance < 0)
